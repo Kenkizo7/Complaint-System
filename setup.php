@@ -21,9 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($result['admin_credentials'])) {
                 $showCredentials = true;
                 $adminCredentials = $result['admin_credentials'];
+                
+                // Store credentials in session to show on login page
+                $_SESSION['setup_credentials'] = $adminCredentials;
             }
         }
     }
+}
+
+// If setup is successful and we have credentials, redirect to login
+if ($success && $showCredentials) {
+    header('Location: login.php?setup=success');
+    exit();
 }
 
 // Check current status
@@ -40,7 +49,7 @@ if ($dbExists) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup - College Complaint System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .setup-container {
@@ -69,14 +78,6 @@ if ($dbExists) {
             background-color: #e74c3c;
         }
         
-        .credentials-box {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
         .setup-steps {
             margin: 30px 0;
         }
@@ -84,6 +85,13 @@ if ($dbExists) {
         .setup-steps ol {
             margin-left: 20px;
             line-height: 2;
+        }
+        
+        .back-to-login {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
         }
     </style>
 </head>
@@ -102,33 +110,22 @@ if ($dbExists) {
             <div class="card">
                 <h2><i class="fas fa-cogs"></i> System Setup</h2>
                 
+                <div class="back-to-login">
+                    <a href="login.php" class="btn">
+                        <i class="fas fa-arrow-left"></i> Back to Login
+                    </a>
+                </div>
+                
                 <?php if ($error): ?>
                     <div class="alert alert-error">
                         <strong>Error:</strong> <?php echo $error; ?>
                     </div>
                 <?php endif; ?>
                 
-                <?php if ($success): ?>
+                <?php if ($success && !$showCredentials): ?>
                     <div class="alert alert-success">
                         <strong>Success!</strong> <?php echo $message; ?>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if ($showCredentials): ?>
-                    <div class="credentials-box">
-                        <h3><i class="fas fa-key"></i> Admin Credentials</h3>
-                        <p><strong>Important:</strong> Save these credentials. You should change the password after first login.</p>
-                        <table style="width: 100%; margin-top: 15px;">
-                            <tr>
-                                <td style="padding: 8px 0;"><strong>Email:</strong></td>
-                                <td><?php echo $adminCredentials['email']; ?></td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px 0;"><strong>Password:</strong></td>
-                                <td><?php echo $adminCredentials['password']; ?></td>
-                            </tr>
-                        </table>
-                        <div style="margin-top: 20px;">
+                        <div style="margin-top: 15px;">
                             <a href="login.php" class="btn btn-primary">
                                 <i class="fas fa-sign-in-alt"></i> Go to Login
                             </a>
@@ -136,25 +133,59 @@ if ($dbExists) {
                     </div>
                 <?php endif; ?>
                 
-                <div class="setup-steps">
-                    <h3>Setup Status</h3>
-                    <ul style="list-style: none; padding-left: 0;">
-                        <li>
-                            <span class="status-indicator <?php echo $dbExists ? 'status-ok' : 'status-warning'; ?>"></span>
-                            Database: <?php echo $dbExists ? 'Exists' : 'Not found'; ?>
-                        </li>
-                        <li>
-                            <span class="status-indicator <?php echo empty($missingTables) ? 'status-ok' : 'status-warning'; ?>"></span>
-                            Tables: <?php echo empty($missingTables) ? 'All tables exist' : 'Missing tables: ' . implode(', ', $missingTables); ?>
-                        </li>
-                        <li>
-                            <span class="status-indicator status-ok"></span>
-                            Uploads directory: <?php echo is_dir('uploads') ? 'Ready' : 'Not ready'; ?>
-                        </li>
-                    </ul>
-                </div>
+                <?php if ($showCredentials): ?>
+                    <div class="alert alert-success">
+                        <h3><i class="fas fa-check-circle"></i> Setup Completed!</h3>
+                        <p><?php echo $message; ?></p>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 15px;">
+                            <h4><i class="fas fa-key"></i> Admin Credentials</h4>
+                            <p><strong>Important:</strong> Save these credentials. You should change the password after first login.</p>
+                            <table style="width: 100%; margin-top: 10px;">
+                                <tr>
+                                    <td style="padding: 8px 0; width: 120px;"><strong>Email:</strong></td>
+                                    <td><?php echo $adminCredentials['email']; ?></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0;"><strong>Password:</strong></td>
+                                    <td><?php echo $adminCredentials['password']; ?></td>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 20px;">
+                                <p>You will be redirected to login page in 5 seconds...</p>
+                                <a href="login.php" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt"></i> Go to Login Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        // Auto-redirect after 5 seconds
+                        setTimeout(function() {
+                            window.location.href = 'login.php?setup=success';
+                        }, 5000);
+                    </script>
+                <?php endif; ?>
                 
                 <?php if (!$success): ?>
+                    <div class="setup-steps">
+                        <h3>Setup Status</h3>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li>
+                                <span class="status-indicator <?php echo $dbExists ? 'status-ok' : 'status-warning'; ?>"></span>
+                                Database: <?php echo $dbExists ? 'Exists' : 'Not found'; ?>
+                            </li>
+                            <li>
+                                <span class="status-indicator <?php echo empty($missingTables) ? 'status-ok' : 'status-warning'; ?>"></span>
+                                Tables: <?php echo empty($missingTables) ? 'All tables exist' : 'Missing tables: ' . implode(', ', $missingTables); ?>
+                            </li>
+                            <li>
+                                <span class="status-indicator status-ok"></span>
+                                Uploads directory: <?php echo is_dir('uploads') ? 'Ready' : 'Not ready'; ?>
+                            </li>
+                        </ul>
+                    </div>
+                    
                     <div class="setup-steps">
                         <h3>Setup Instructions</h3>
                         <ol>
@@ -181,7 +212,7 @@ if ($dbExists) {
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
                     <h4>Troubleshooting</h4>
                     <ul>
-                        <li>Check if MySQL is running: <code>sudo service mysql status</code></li>
+                        <li>Check if MySQL is running</li>
                         <li>Verify database user permissions</li>
                         <li>Check PHP error logs for more details</li>
                         <li>Ensure PHP has MySQLi extension enabled</li>

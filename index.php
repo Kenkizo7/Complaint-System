@@ -3,14 +3,25 @@ require_once 'includes/config.php';
 require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 
-requireLogin();
+// Check if database exists
+$dbExists = checkDatabaseExists($conn, DB_NAME);
 
-// Check if database and tables exist
-$missingTables = checkTablesExist($conn);
-if (!empty($missingTables)) {
-    header('Location: setup.php?missing_tables=' . urlencode(implode(',', $missingTables)));
+if (!$dbExists) {
+    $_SESSION['db_error'] = "Database not found. Please run setup first.";
+    header('Location: login.php');
     exit();
 }
+
+// Check if tables exist
+$missingTables = checkTablesExist($conn);
+if (!empty($missingTables)) {
+    $_SESSION['db_error'] = "Database tables missing. Please run setup.";
+    header('Location: login.php');
+    exit();
+}
+
+// Now require login
+requireLogin();
 
 $user_id = $_SESSION['user_id'];
 $user_data = getUserData($conn, $user_id);
@@ -23,10 +34,12 @@ $recent_complaints = getComplaints($conn, $user_id, null, 5);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - College Complaint System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Rest of the index.php code remains the same -->
+    <!-- ... -->
     <header>
         <nav>
             <div class="logo">
