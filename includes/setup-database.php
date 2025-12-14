@@ -105,6 +105,24 @@ foreach ($colleges as $college) {
                    ORDER BY RAND() LIMIT 3";
     mysqli_query($conn, $updateQuery);
 }
+// Add more sample colleges and courses
+$college_courses = [
+    'Engineering' => ['Computer Engineering', 'Electrical Engineering', 'Mechanical Engineering', 'Civil Engineering'],
+    'Science' => ['Computer Science', 'Mathematics', 'Physics', 'Chemistry', 'Biology'],
+    'Arts' => ['English Literature', 'History', 'Political Science', 'Psychology', 'Sociology'],
+    'Business' => ['Business Administration', 'Accounting', 'Finance', 'Marketing', 'Economics'],
+    'Medicine' => ['Medicine', 'Nursing', 'Pharmacy', 'Dentistry'],
+    'Law' => ['Law', 'Criminal Justice'],
+    'Education' => ['Elementary Education', 'Secondary Education', 'Special Education']
+];
+
+// Update existing users with proper college and course data
+foreach ($college_courses as $college => $courses) {
+    $update_query = "UPDATE users SET college = '$college', course = '$courses[0]' 
+                     WHERE college IS NULL AND student_id LIKE 'STU%' 
+                     ORDER BY RAND() LIMIT 2";
+    mysqli_query($conn, $update_query);
+}
     // Create users table
     $createUsersTable = "CREATE TABLE IF NOT EXISTS users (
         id INT PRIMARY KEY AUTO_INCREMENT,

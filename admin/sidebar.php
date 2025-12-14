@@ -1,11 +1,18 @@
-<div class="sidebar">
-    <h2>Admin Panel</h2>
-    <ul>
-        <li><a href="admin_dashboard.php">Dashboard</a></li>
-        <li><a href="manage_complaints.php">Manage Complaints</a></li>
-        <li><a href="manage_students.php">Manage Students</a></li>
-        <li><a href="create_student.php">Create Student Account</a></li>
-        <li><a href="reports.php">Reports</a></li>
-        <li><a href="../logout.php">Logout</a></li>
-    </ul>
-</div>
+<!-- In the sidebar menu section, add: -->
+<div class="menu-section">Management</div>
+<a href="manage-complaints.php" class="menu-item">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>Manage Complaints</span>
+</a>
+<a href="manage-students.php" class="menu-item">
+    <i class="fas fa-users"></i>
+    <span>Manage Students</span>
+</a>
+<a href="student-registration.php" class="menu-item">
+    <i class="fas fa-user-plus"></i>
+    <span>Student Registration</span>
+</a>
+<a href="quick-registration.php" class="menu-item">
+    <i class="fas fa-users"></i>
+    <span>Quick Registration</span>
+</a>

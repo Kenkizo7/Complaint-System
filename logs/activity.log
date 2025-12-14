@@ -6,3 +6,13 @@
 2025-12-14 20:33:09 | User ID: 2 | Activity: User logged in
 2025-12-14 21:17:58 | User ID: 2 | Activity: User logged out
 2025-12-14 21:19:06 | User ID: 0 | Activity: Failed login attempt with email: admin@college.edu.ph
+2025-12-14 21:41:18 | User ID: 1 | Activity: User logged in
+2025-12-14 21:43:19 | User ID: 1 | Activity: User logged out
+2025-12-14 21:43:26 | User ID: 0 | Activity: Failed login attempt with email: john.doe@college.edu
+2025-12-14 21:43:35 | User ID: 0 | Activity: Failed login attempt with email: john.doe@college.edu
+2025-12-14 21:43:50 | User ID: 0 | Activity: Failed login attempt with email: john.doe@college.edu
+2025-12-14 21:43:58 | User ID: 0 | Activity: Failed login attempt with email: john.doe@college.edu
+2025-12-14 21:44:42 | User ID: 2 | Activity: User logged in
+2025-12-14 21:46:28 | User ID: 1 | Activity: User logged in
+2025-12-14 21:54:16 | User ID: 1 | Activity: User logged out
+2025-12-14 21:54:30 | User ID: 2 | Activity: User logged in
