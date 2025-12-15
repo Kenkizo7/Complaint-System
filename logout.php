@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/config.php';
 require_once 'includes/auth.php';
+require_once 'includes/functions.php';
 
 // Log logout activity if user was logged in
 if (isset($_SESSION['user_id'])) {

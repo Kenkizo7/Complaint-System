@@ -157,7 +157,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                                 <th>ID</th>
                                 <th>Title</th>
                                 <th>Category</th>
-                                <th>Priority</th>
                                 <th>Status</th>
                                 <th>Created</th>
                                 <th>Last Updated</th>
@@ -171,16 +170,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                                     <td><?php echo htmlspecialchars($complaint['title']); ?></td>
                                     <td><?php echo htmlspecialchars($complaint['category']); ?></td>
                                     <td>
-                                        <span class="priority-badge priority-<?php echo strtolower($complaint['priority']); ?>">
-                                            <?php echo $complaint['priority']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
                                         <?php 
-                                        $status_class = strtolower(str_replace(' ', '-', $complaint['status']));
+                                        $status = $complaint['status'] ?? 'Pending';
+                                        $status_class = strtolower(str_replace(' ', '-', $status));
                                         ?>
                                         <span class="status-badge status-<?php echo $status_class; ?>">
-                                            <?php echo $complaint['status']; ?>
+                                            <?php echo $status; ?>
                                         </span>
                                     </td>
                                     <td><?php echo date('d M Y', strtotime($complaint['created_at'])); ?></td>
@@ -301,6 +296,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         .modal-section:last-child {
             border-bottom: none;
         }
+        
+        .status-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .status-step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        
+        .status-step.active .step-circle {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background-color: white;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .status-step.active .step-label {
+            color: #3498db;
+            font-weight: bold;
+        }
     </style>
 
     <script>
@@ -310,7 +348,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
             .then(data => {
                 const detailsDiv = document.getElementById('complaintDetails');
                 
-                let statusClass = data.status.toLowerCase().replace(' ', '-');
+                let statusClass = data.status ? data.status.toLowerCase().replace(' ', '-') : 'pending';
                 let timelineHtml = '';
                 
                 // Create timeline
@@ -320,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                             <div class="timeline-date">${new Date(data.created_at).toLocaleString()}</div>
                             <div class="timeline-content">
                                 <strong>Complaint Filed</strong>
-                                <p>Complaint was submitted by ${data.name}</p>
+                                <p>Complaint was submitted by ${data.name || 'User'}</p>
                             </div>
                         </div>
                     `;
@@ -332,7 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                             <div class="timeline-date">${new Date(data.updated_at).toLocaleString()}</div>
                             <div class="timeline-content">
                                 <strong>Status Updated</strong>
-                                <p>Status changed to <span class="status-badge status-${statusClass}">${data.status}</span></p>
+                                <p>Status changed to <span class="status-badge status-${statusClass}">${data.status || 'Pending'}</span></p>
                             </div>
                         </div>
                     `;
@@ -352,27 +390,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                 
                 detailsDiv.innerHTML = `
                     <div class="modal-section">
-                        <h2>${data.title}</h2>
+                        <h2>${data.title || 'No Title'}</h2>
                         <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px;">
                             <div>
                                 <strong>Complaint ID:</strong> #${data.id}
                             </div>
                             <div>
-                                <strong>Student ID:</strong> ${data.student_id}
+                                <strong>Student ID:</strong> ${data.student_id || 'N/A'}
                             </div>
                             <div>
-                                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${data.status}</span>
+                                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${data.status || 'Pending'}</span>
                             </div>
                         </div>
                         <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
                             <div>
-                                <strong>Priority:</strong> <span class="priority-badge priority-${data.priority.toLowerCase()}">${data.priority}</span>
+                                <strong>Category:</strong> ${data.category || 'N/A'}
                             </div>
                             <div>
-                                <strong>Category:</strong> ${data.category}
-                            </div>
-                            <div>
-                                <strong>Filed on:</strong> ${new Date(data.created_at).toLocaleDateString()}
+                                <strong>Filed on:</strong> ${data.created_at ? new Date(data.created_at).toLocaleDateString() : 'N/A'}
                             </div>
                         </div>
                     </div>
@@ -380,7 +415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                     <div class="modal-section">
                         <h3>Description</h3>
                         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; line-height: 1.6;">
-                            ${data.description}
+                            ${data.description || 'No description provided.'}
                         </div>
                     </div>
                     
@@ -396,7 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                     <div class="modal-section">
                         <h3>Complaint Timeline</h3>
                         <div class="timeline">
-                            ${timelineHtml}
+                            ${timelineHtml || '<p>No timeline data available.</p>'}
                         </div>
                     </div>
                     

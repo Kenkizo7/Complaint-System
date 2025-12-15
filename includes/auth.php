@@ -1,9 +1,6 @@
 <?php
 require_once 'config.php';
 
-function isLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
 
 // auth.php
 
@@ -12,25 +9,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// No need to include config.php here - it should be included before this file
-// Let the calling file handle database connections
-
-// Function to check if user is logged in (same as in functions.php but kept for compatibility)
-
-// Function to redirect if not logged in
-function requireLogin() {
-    if (!isLoggedIn()) {
-        // Determine the correct login page path
-        $login_path = 'login.php';
-        if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) {
-            $login_path = '../login.php';
-        }
-        header('Location: ' . $login_path);
-        exit();
-    }
-}
-
-// Function to check if user is admin
 function isAdmin() {
     return isset($_SESSION['role']) && $_SESSION['role'] == 'admin';
 }

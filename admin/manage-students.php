@@ -16,52 +16,54 @@ $status_filter = $_GET['status'] ?? '';
 $college_filter = $_GET['college'] ?? '';
 $course_filter = $_GET['course'] ?? '';
 
-// Build query
-$query = "SELECT student_id, name, email, college, course, year_level, status, 
-                 created_at, last_login, login_count 
-          FROM users 
-          WHERE student_id != 'ADMIN001'";
-
+// Build base query for filtering
+$where_conditions = [];
 $params = [];
 $types = '';
 
+// Base condition to exclude admin
+$where_conditions[] = "student_id != 'ADMIN001'";
+
 if ($search) {
-    $query .= " AND (student_id LIKE ? OR name LIKE ? OR email LIKE ?)";
+    $where_conditions[] = "(student_id LIKE ? OR name LIKE ? OR email LIKE ?)";
     $search_term = "%$search%";
     $params = array_fill(0, 3, $search_term);
     $types = str_repeat('s', 3);
 }
 
 if ($status_filter) {
-    $query .= " AND status = ?";
+    $where_conditions[] = "status = ?";
     $params[] = $status_filter;
     $types .= 's';
 }
 
 if ($college_filter) {
-    $query .= " AND college = ?";
+    $where_conditions[] = "college = ?";
     $params[] = $college_filter;
     $types .= 's';
 }
 
 if ($course_filter) {
-    $query .= " AND course LIKE ?";
+    $where_conditions[] = "course LIKE ?";
     $params[] = "%$course_filter%";
     $types .= 's';
 }
 
-$query .= " ORDER BY created_at DESC";
+// Build the main query
+$where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
 
-// Get total count
-$count_query = str_replace("SELECT student_id, name, email, college, course, year_level, status, created_at, last_login, login_count", 
-                          "SELECT COUNT(*) as total", $query);
+// Get total count (simpler approach)
+$count_query = "SELECT COUNT(*) as total FROM users $where_clause";
 $stmt = mysqli_prepare($conn, $count_query);
+
 if (!empty($params)) {
     mysqli_stmt_bind_param($stmt, $types, ...$params);
 }
+
 mysqli_stmt_execute($stmt);
 $count_result = mysqli_stmt_get_result($stmt);
-$total_students = mysqli_fetch_assoc($count_result)['total'];
+$count_data = mysqli_fetch_assoc($count_result);
+$total_students = $count_data ? $count_data['total'] : 0;
 
 // Pagination
 $page = $_GET['page'] ?? 1;
@@ -69,13 +71,21 @@ $per_page = 20;
 $total_pages = ceil($total_students / $per_page);
 $offset = ($page - 1) * $per_page;
 
-$query .= " LIMIT ? OFFSET ?";
+// Build main query with pagination
+$main_query = "SELECT student_id, name, email, college, course, year_level, status, 
+                      created_at, last_login, login_count 
+               FROM users 
+               $where_clause 
+               ORDER BY created_at DESC 
+               LIMIT ? OFFSET ?";
+
+// Add pagination parameters
 $params[] = $per_page;
 $params[] = $offset;
 $types .= 'ii';
 
-// Execute query
-$stmt = mysqli_prepare($conn, $query);
+// Execute main query
+$stmt = mysqli_prepare($conn, $main_query);
 if (!empty($params)) {
     mysqli_stmt_bind_param($stmt, $types, ...$params);
 }
@@ -109,9 +119,8 @@ while ($row = mysqli_fetch_assoc($courses_result)) {
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php include 'admin-sidebar-styles.php'; ?>
     <style>
-        <?php include 'admin-sidebar-styles.php'; ?>
-        
         .student-avatar {
             width: 40px;
             height: 40px;
@@ -187,11 +196,32 @@ while ($row = mysqli_fetch_assoc($courses_result)) {
             padding: 4px 8px;
             font-size: 12px;
         }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
     <div class="admin-container">
-        <?php include 'admin-sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
         
         <main class="admin-main">
             <header class="admin-header">

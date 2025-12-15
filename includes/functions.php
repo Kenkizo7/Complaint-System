@@ -10,7 +10,17 @@ if (session_status() === PHP_SESSION_NONE) {
 // We'll assume that config.php has already been included by the calling script
 
 // Function to check if user is logged in
+function isLoggedIn() {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
 // Function to require login
+function requireLogin() {
+    if (!isLoggedIn()) {
+        header('Location: login.php');
+        exit();
+    }
+}
 
 // Function to get user data
 function getUserData($conn, $user_id) {
@@ -20,6 +30,79 @@ function getUserData($conn, $user_id) {
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     return mysqli_fetch_assoc($result);
+}
+
+// Function to get complaint statistics for a user
+function getComplaintStats($conn, $user_id) {
+    // Initialize stats array
+    $stats = [
+        'total' => 0,
+        'pending' => 0,
+        'under_investigation' => 0,
+        'resolved' => 0
+    ];
+    
+    // Get total complaints count
+    $sql = "SELECT status, COUNT(*) as count FROM complaints WHERE user_id = ? GROUP BY status";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 'i', $user_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    while ($row = mysqli_fetch_assoc($result)) {
+        $stats['total'] += $row['count'];
+        
+        // Map status to array keys
+        switch($row['status']) {
+            case 'Pending':
+                $stats['pending'] = $row['count'];
+                break;
+            case 'Under Investigation':
+                $stats['under_investigation'] = $row['count'];
+                break;
+            case 'Resolved':
+                $stats['resolved'] = $row['count'];
+                break;
+        }
+    }
+    
+    return $stats;
+}
+
+// Function to get complaints
+function getComplaints($conn, $user_id, $status = null, $limit = null) {
+    $sql = "SELECT * FROM complaints WHERE user_id = ?";
+    
+    if ($status) {
+        $sql .= " AND status = ?";
+    }
+    
+    $sql .= " ORDER BY created_at DESC";
+    
+    if ($limit) {
+        $sql .= " LIMIT ?";
+    }
+    
+    $stmt = mysqli_prepare($conn, $sql);
+    
+    if ($status && $limit) {
+        mysqli_stmt_bind_param($stmt, 'isi', $user_id, $status, $limit);
+    } elseif ($status) {
+        mysqli_stmt_bind_param($stmt, 'is', $user_id, $status);
+    } elseif ($limit) {
+        mysqli_stmt_bind_param($stmt, 'ii', $user_id, $limit);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'i', $user_id);
+    }
+    
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    $complaints = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $complaints[] = $row;
+    }
+    return $complaints;
 }
 
 // Function to upload file
@@ -153,8 +236,6 @@ function updateComplaintStatus($conn, $complaint_id, $status, $admin_notes = nul
     mysqli_stmt_bind_param($stmt, 'ssi', $status, $admin_notes, $complaint_id);
     return mysqli_stmt_execute($stmt);
 }
-
-// Function to check if database exists
-
 // Function to check if user is admin
+
 ?>

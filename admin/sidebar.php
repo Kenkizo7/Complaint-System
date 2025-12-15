@@ -34,7 +34,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 </a>
             </li>
             <li>
-                <a href="manage-student.php">
+                <a href="manage-students.php">
                     <i class="fas fa-student"></i>
                     <span>Manage Student</span>
                 </a>

@@ -1,7 +1,7 @@
 <?php
 require_once 'includes/config.php';
 require_once 'includes/auth.php';
-
+require_once 'includes/functions.php';
 // Check for database errors in session
 $db_error = '';
 if (isset($_SESSION['db_error'])) {
