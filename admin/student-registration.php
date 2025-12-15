@@ -1,7 +1,7 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once '../includes/config.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
 
 requireLogin();
 
@@ -151,8 +151,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Student Registration - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php include 'admin-sidebar-styles.php'; ?>
     <style>
-        <?php include 'admin-sidebar-styles.php'; ?>
         
         .registration-container {
             max-width: 1000px;
@@ -425,7 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="admin-container">
-        <?php include 'admin-sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
         
         <main class="admin-main">
             <header class="admin-header">

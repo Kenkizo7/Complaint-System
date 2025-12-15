@@ -1,7 +1,7 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once '../includes/config.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
 
 requireLogin();
 
@@ -108,9 +108,9 @@ while ($row = mysqli_fetch_assoc($categories_result)) {
     <title>Manage Complaints - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php include 'admin-sidebar-styles.php'; ?>
     <style>
         /* Use the same sidebar styles from admin-dashboard.php */
-        <?php include 'admin-sidebar-styles.php'; ?>
         
         .filter-section {
             background: white;
@@ -263,8 +263,9 @@ while ($row = mysqli_fetch_assoc($categories_result)) {
     </style>
 </head>
 <body>
+    <body>
     <div class="admin-container">
-        <?php include 'admin-sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
         
         <main class="admin-main">
             <header class="admin-header">

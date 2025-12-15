@@ -1,7 +1,7 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once '../includes/config.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
 
 requireLogin();
 
@@ -107,6 +107,7 @@ while ($row = mysqli_fetch_assoc($courses_result)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Students - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         <?php include 'admin-sidebar-styles.php'; ?>

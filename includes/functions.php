@@ -22,26 +22,6 @@ function getUserData($conn, $user_id) {
     return mysqli_fetch_assoc($result);
 }
 
-// Function to log activity
-function logActivity($conn, $user_id, $action, $details = '') {
-    if (!$conn) {
-        return false; // No database connection
-    }
-    
-    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '';
-    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-    
-    $sql = "INSERT INTO admin_logs (admin_id, action, details, ip_address, user_agent) 
-            VALUES (?, ?, ?, ?, ?)";
-    $stmt = mysqli_prepare($conn, $sql);
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 'issss', $user_id, $action, $details, $ip_address, $user_agent);
-        mysqli_stmt_execute($stmt);
-        return true;
-    }
-    return false;
-}
-
 // Function to upload file
 function uploadFile($file) {
     $allowed_extensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
@@ -175,13 +155,6 @@ function updateComplaintStatus($conn, $complaint_id, $status, $admin_notes = nul
 }
 
 // Function to check if database exists
-function checkDatabaseExists($conn, $dbname) {
-    $result = mysqli_query($conn, "SHOW DATABASES LIKE '$dbname'");
-    return mysqli_num_rows($result) > 0;
-}
 
 // Function to check if user is admin
-function isAdmin() {
-    return isset($_SESSION['role']) && $_SESSION['role'] == 'admin';
-}
 ?>
