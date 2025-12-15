@@ -13,7 +13,12 @@ if (isset($_SESSION['db_error'])) {
 $dbExists = checkDatabaseExists($conn, DB_NAME);
 
 if (isLoggedIn()) {
-    header('Location: index.php');
+    // Check if user is admin and redirect to admin panel
+    if ($_SESSION['role'] == 'admin') {
+        header('Location: admin/admin-dashboard.php');
+    } else {
+        header('Location: index.php');
+    }
     exit();
 }
 
@@ -47,7 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Set a success message
             $_SESSION['login_success'] = true;
             
-            header('Location: index.php');
+            // Redirect admin to admin panel, students to main index
+            if ($_SESSION['role'] == 'admin') {
+                header('Location: admin/admin-dashboard.php');
+            } else {
+                header('Location: index.php');
+            }
             exit();
         } else {
             $error = "Invalid email or password";
@@ -185,9 +195,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
             </form>
+            
+            <!-- Demo Credentials Section -->
+            <div class="demo-credentials">
+                <h4><i class="fas fa-info-circle"></i> Demo Credentials:</h4>
+                <p><strong>Admin:</strong> admin@college.edu / admin123</p>
+                <p><strong>Student:</strong> john.doe@college.edu / student123</p>
+                <p><strong>Note:</strong> Use admin credentials to access the admin panel.</p>
+            </div>
         <?php endif; ?>
         
-    
         <div class="login-links">
             <p>
                 <a href="forgot-password.php">

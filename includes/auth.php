@@ -5,26 +5,42 @@ function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }
 
+// auth.php
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// No need to include config.php here - it should be included before this file
+// Let the calling file handle database connections
+
+// Function to check if user is logged in (same as in functions.php but kept for compatibility)
+
+// Function to redirect if not logged in
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: login.php');
+        // Determine the correct login page path
+        $login_path = 'login.php';
+        if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) {
+            $login_path = '../login.php';
+        }
+        header('Location: ' . $login_path);
         exit();
     }
 }
+
+// Function to check if user is admin
+function isAdmin() {
+    return isset($_SESSION['role']) && $_SESSION['role'] == 'admin';
+}
+
+// Function to require admin access
 
 function logout() {
     session_destroy();
     header('Location: login.php');
     exit();
-}
-
-function getUserData($conn, $user_id) {
-    $sql = "SELECT * FROM users WHERE id = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'i', $user_id);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    return mysqli_fetch_assoc($result);
 }
 
 function generateResetToken($conn, $email) {

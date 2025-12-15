@@ -16,114 +16,7 @@ function setupDatabase($conn) {
     // Select the database
     mysqli_select_db($conn, "college_complaint_system");
     
-    // Add to setupDatabase function, after creating users table:
-
-// Add user status and college fields to users table
-$alterUsersTable = "ALTER TABLE users 
-    ADD COLUMN IF NOT EXISTS status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
-    ADD COLUMN IF NOT EXISTS college VARCHAR(100),
-    ADD COLUMN IF NOT EXISTS course VARCHAR(100),
-    ADD COLUMN IF NOT EXISTS year_level VARCHAR(20),
-    ADD COLUMN IF NOT EXISTS date_of_birth DATE,
-    ADD COLUMN IF NOT EXISTS address TEXT,
-    ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS last_login DATETIME,
-    ADD COLUMN IF NOT EXISTS login_count INT DEFAULT 0,
-    ADD INDEX idx_status (status),
-    ADD INDEX idx_college (college)";
-
-if (!mysqli_query($conn, $alterUsersTable)) {
-    // If ALTER fails, try creating columns individually
-    $columnsToAdd = [
-        "status ENUM('active', 'inactive', 'suspended') DEFAULT 'active'",
-        "college VARCHAR(100)",
-        "course VARCHAR(100)",
-        "year_level VARCHAR(20)",
-        "date_of_birth DATE",
-        "address TEXT",
-        "profile_picture VARCHAR(255)",
-        "last_login DATETIME",
-        "login_count INT DEFAULT 0"
-    ];
-    
-    foreach ($columnsToAdd as $column) {
-        $checkColumn = explode(' ', $column)[0];
-        $checkQuery = "SHOW COLUMNS FROM users LIKE '$checkColumn'";
-        $result = mysqli_query($conn, $checkQuery);
-        
-        if (mysqli_num_rows($result) == 0) {
-            $addColumnQuery = "ALTER TABLE users ADD COLUMN $column";
-            mysqli_query($conn, $addColumnQuery);
-        }
-    }
-}
-
-// Create admin_logs table for tracking admin actions
-$createAdminLogsTable = "CREATE TABLE IF NOT EXISTS admin_logs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    admin_id INT NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    target_type VARCHAR(50),
-    target_id INT,
-    details TEXT,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_admin_id (admin_id),
-    INDEX idx_action (action),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
-if (!mysqli_query($conn, $createAdminLogsTable)) {
-    return ["error" => "Failed to create admin_logs table: " . mysqli_error($conn)];
-}
-
-// Create reports table
-$createReportsTable = "CREATE TABLE IF NOT EXISTS reports (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    report_type VARCHAR(50) NOT NULL,
-    report_name VARCHAR(200) NOT NULL,
-    generated_by INT NOT NULL,
-    file_path VARCHAR(255),
-    parameters TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (generated_by) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_report_type (report_type),
-    INDEX idx_generated_by (generated_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
-if (!mysqli_query($conn, $createReportsTable)) {
-    return ["error" => "Failed to create reports table: " . mysqli_error($conn)];
-}
-
-// Add sample colleges and update existing users
-$colleges = ['College of Engineering', 'College of Science', 'College of Medicine', 'College of Law', 'College of Teacher Education'];
-foreach ($colleges as $college) {
-    $updateQuery = "UPDATE users SET college = '$college' 
-                   WHERE college IS NULL AND student_id LIKE 'STU%' 
-                   ORDER BY RAND() LIMIT 3";
-    mysqli_query($conn, $updateQuery);
-}
-// Add more sample colleges and courses
-$college_courses = [
-    'Engineering' => ['Computer Engineering', 'Electrical Engineering', 'Mechanical Engineering', 'Civil Engineering'],
-    'Science' => ['Computer Science', 'Mathematics', 'Physics', 'Chemistry', 'Biology'],
-    'Arts' => ['English Literature', 'History', 'Political Science', 'Psychology', 'Sociology'],
-    'Business' => ['Business Administration', 'Accounting', 'Finance', 'Marketing', 'Economics'],
-    'Medicine' => ['Medicine', 'Nursing', 'Pharmacy', 'Dentistry'],
-    'Law' => ['Law', 'Criminal Justice'],
-    'Education' => ['Elementary Education', 'Secondary Education', 'Special Education']
-];
-
-// Update existing users with proper college and course data
-foreach ($college_courses as $college => $courses) {
-    $update_query = "UPDATE users SET college = '$college', course = '$courses[0]' 
-                     WHERE college IS NULL AND student_id LIKE 'STU%' 
-                     ORDER BY RAND() LIMIT 2";
-    mysqli_query($conn, $update_query);
-}
-    // Create users table
+    // Create users table first (with all columns)
     $createUsersTable = "CREATE TABLE IF NOT EXISTS users (
         id INT PRIMARY KEY AUTO_INCREMENT,
         student_id VARCHAR(20) UNIQUE NOT NULL,
@@ -133,9 +26,20 @@ foreach ($college_courses as $college => $courses) {
         password VARCHAR(255) NOT NULL,
         reset_token VARCHAR(255),
         reset_token_expiry DATETIME,
+        status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+        college VARCHAR(100),
+        course VARCHAR(100),
+        year_level VARCHAR(20),
+        date_of_birth DATE,
+        address TEXT,
+        profile_picture VARCHAR(255),
+        last_login DATETIME,
+        login_count INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_email (email),
-        INDEX idx_student_id (student_id)
+        INDEX idx_student_id (student_id),
+        INDEX idx_status (status),
+        INDEX idx_college (college)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
     
     if (!mysqli_query($conn, $createUsersTable)) {
@@ -213,6 +117,45 @@ foreach ($college_courses as $college => $courses) {
         return ["error" => "Failed to create complaint_witnesses table: " . mysqli_error($conn)];
     }
     
+    // Create admin_logs table for tracking admin actions
+    $createAdminLogsTable = "CREATE TABLE IF NOT EXISTS admin_logs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        admin_id INT NOT NULL,
+        action VARCHAR(100) NOT NULL,
+        target_type VARCHAR(50),
+        target_id INT,
+        details TEXT,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_admin_id (admin_id),
+        INDEX idx_action (action),
+        INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    
+    if (!mysqli_query($conn, $createAdminLogsTable)) {
+        return ["error" => "Failed to create admin_logs table: " . mysqli_error($conn)];
+    }
+    
+    // Create reports table
+    $createReportsTable = "CREATE TABLE IF NOT EXISTS reports (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        report_type VARCHAR(50) NOT NULL,
+        report_name VARCHAR(200) NOT NULL,
+        generated_by INT NOT NULL,
+        file_path VARCHAR(255),
+        parameters TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (generated_by) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_report_type (report_type),
+        INDEX idx_generated_by (generated_by)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    
+    if (!mysqli_query($conn, $createReportsTable)) {
+        return ["error" => "Failed to create reports table: " . mysqli_error($conn)];
+    }
+    
     // Check if admin user exists, if not create one
     $checkAdminQuery = "SELECT id FROM users WHERE email = 'admin@college.edu'";
     $result = mysqli_query($conn, $checkAdminQuery);
@@ -220,8 +163,8 @@ foreach ($college_courses as $college => $courses) {
     if (mysqli_num_rows($result) == 0) {
         // Create admin user
         $hashedPassword = password_hash('admin123', PASSWORD_DEFAULT);
-        $createAdminQuery = "INSERT INTO users (student_id, name, email, contact_number, password) 
-                            VALUES ('ADMIN001', 'System Administrator', 'admin@college.edu', '9876543210', '$hashedPassword')";
+        $createAdminQuery = "INSERT INTO users (student_id, name, email, contact_number, password, college, course) 
+                            VALUES ('ADMIN001', 'System Administrator', 'admin@college.edu', '9876543210', '$hashedPassword', 'Administration', 'System Admin')";
         
         if (!mysqli_query($conn, $createAdminQuery)) {
             return ["error" => "Failed to create admin user: " . mysqli_error($conn)];
@@ -230,16 +173,42 @@ foreach ($college_courses as $college => $courses) {
         // Create sample student users
         $studentPassword = password_hash('student123', PASSWORD_DEFAULT);
         $students = [
-            ['STU2024001', 'John Doe', 'john.doe@college.edu', '9876543211'],
-            ['STU2024002', 'Jane Smith', 'jane.smith@college.edu', '9876543212'],
-            ['STU2024003', 'Robert Johnson', 'robert.johnson@college.edu', '9876543213'],
-            ['STU2024004', 'Emily Davis', 'emily.davis@college.edu', '9876543214']
+            ['STU2024001', 'John Doe', 'john.doe@college.edu', '9876543211', 'Engineering', 'Computer Engineering'],
+            ['STU2024002', 'Jane Smith', 'jane.smith@college.edu', '9876543212', 'Science', 'Computer Science'],
+            ['STU2024003', 'Robert Johnson', 'robert.johnson@college.edu', '9876543213', 'Arts', 'Psychology'],
+            ['STU2024004', 'Emily Davis', 'emily.davis@college.edu', '9876543214', 'Business', 'Business Administration']
         ];
         
         foreach ($students as $student) {
-            $createStudentQuery = "INSERT INTO users (student_id, name, email, contact_number, password) 
-                                  VALUES ('{$student[0]}', '{$student[1]}', '{$student[2]}', '{$student[3]}', '$studentPassword')";
+            $createStudentQuery = "INSERT INTO users (student_id, name, email, contact_number, password, college, course) 
+                                  VALUES ('{$student[0]}', '{$student[1]}', '{$student[2]}', '{$student[3]}', '$studentPassword', '{$student[4]}', '{$student[5]}')";
             mysqli_query($conn, $createStudentQuery);
+        }
+        
+        // Add more sample data for other colleges
+        $college_courses = [
+            'Engineering' => ['Electrical Engineering', 'Mechanical Engineering', 'Civil Engineering'],
+            'Science' => ['Mathematics', 'Physics', 'Chemistry', 'Biology'],
+            'Arts' => ['English Literature', 'History', 'Political Science', 'Sociology'],
+            'Business' => ['Accounting', 'Finance', 'Marketing', 'Economics'],
+            'Medicine' => ['Medicine', 'Nursing', 'Pharmacy', 'Dentistry'],
+            'Law' => ['Law', 'Criminal Justice'],
+            'Education' => ['Elementary Education', 'Secondary Education', 'Special Education']
+        ];
+        
+        // Add additional sample users
+        $studentIdCounter = 2024005;
+        foreach ($college_courses as $college => $courses) {
+            foreach ($courses as $course) {
+                $studentId = 'STU' . $studentIdCounter++;
+                $studentName = 'Sample Student ' . ($studentIdCounter - 2024005);
+                $studentEmail = strtolower(str_replace(' ', '.', $studentName)) . '@college.edu';
+                $studentEmail = str_replace('.', '', $studentEmail); // Clean up email
+                
+                $createStudentQuery = "INSERT INTO users (student_id, name, email, contact_number, password, college, course) 
+                                      VALUES ('$studentId', '$studentName', '$studentEmail', '9876543" . rand(100, 999) . "', '$studentPassword', '$college', '$course')";
+                mysqli_query($conn, $createStudentQuery);
+            }
         }
         
         return [
@@ -274,8 +243,10 @@ function checkDatabaseExists($conn, $dbname) {
 }
 
 function checkTablesExist($conn) {
-    $tables = ['users', 'complaints', 'co_complainants', 'complaint_witnesses'];
+    $tables = ['users', 'complaints', 'co_complainants', 'complaint_witnesses', 'admin_logs', 'reports'];
     $missingTables = [];
+    
+    mysqli_select_db($conn, "college_complaint_system");
     
     foreach ($tables as $table) {
         $result = mysqli_query($conn, "SHOW TABLES LIKE '$table'");
@@ -291,6 +262,8 @@ function checkTablesExist($conn) {
 function updateTablesIfNeeded($conn) {
     $updates = [];
     
+    mysqli_select_db($conn, "college_complaint_system");
+    
     // Remove old single co-complainant fields if they exist
     $oldFields = [
         'co_complainant_name',
@@ -303,7 +276,7 @@ function updateTablesIfNeeded($conn) {
         $checkQuery = "SHOW COLUMNS FROM complaints LIKE '$field'";
         $result = mysqli_query($conn, $checkQuery);
         
-        if (mysqli_num_rows($result) > 0) {
+        if ($result && mysqli_num_rows($result) > 0) {
             $alterQuery = "ALTER TABLE complaints DROP COLUMN $field";
             if (mysqli_query($conn, $alterQuery)) {
                 $updates[] = "Removed old $field column";
@@ -315,10 +288,35 @@ function updateTablesIfNeeded($conn) {
     $checkPriorityQuery = "SHOW COLUMNS FROM complaints LIKE 'priority'";
     $result = mysqli_query($conn, $checkPriorityQuery);
     
-    if (mysqli_num_rows($result) > 0) {
+    if ($result && mysqli_num_rows($result) > 0) {
         $removePriorityQuery = "ALTER TABLE complaints DROP COLUMN priority";
         if (mysqli_query($conn, $removePriorityQuery)) {
             $updates[] = "Removed priority column";
+        }
+    }
+    
+    // Check if new columns exist in users table, add if missing
+    $newColumns = [
+        "status" => "ADD COLUMN IF NOT EXISTS status ENUM('active', 'inactive', 'suspended') DEFAULT 'active'",
+        "college" => "ADD COLUMN IF NOT EXISTS college VARCHAR(100)",
+        "course" => "ADD COLUMN IF NOT EXISTS course VARCHAR(100)",
+        "year_level" => "ADD COLUMN IF NOT EXISTS year_level VARCHAR(20)",
+        "date_of_birth" => "ADD COLUMN IF NOT EXISTS date_of_birth DATE",
+        "address" => "ADD COLUMN IF NOT EXISTS address TEXT",
+        "profile_picture" => "ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(255)",
+        "last_login" => "ADD COLUMN IF NOT EXISTS last_login DATETIME",
+        "login_count" => "ADD COLUMN IF NOT EXISTS login_count INT DEFAULT 0"
+    ];
+    
+    foreach ($newColumns as $columnName => $alterStatement) {
+        $checkQuery = "SHOW COLUMNS FROM users LIKE '$columnName'";
+        $result = mysqli_query($conn, $checkQuery);
+        
+        if ($result && mysqli_num_rows($result) == 0) {
+            $alterQuery = "ALTER TABLE users $alterStatement";
+            if (mysqli_query($conn, $alterQuery)) {
+                $updates[] = "Added $columnName column to users table";
+            }
         }
     }
     

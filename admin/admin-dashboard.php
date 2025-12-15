@@ -1,13 +1,14 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+// Go up one level to include config files
+require_once '../includes/config.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
 
 requireLogin();
 
 // Check if user is admin
 if ($_SESSION['role'] != 'admin') {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit();
 }
 
@@ -26,7 +27,7 @@ $stats_sql = "SELECT
     (SELECT COUNT(*) FROM users WHERE status = 'suspended' AND student_id != 'ADMIN001') as suspended_students";
 
 $stats_result = mysqli_query($conn, $stats_sql);
-$stats = mysqli_fetch_assoc($stats);
+$stats = mysqli_fetch_assoc($stats_result);
 
 // Get recent complaints
 $recent_complaints_sql = "SELECT c.*, u.name as complainant_name, u.student_id 
@@ -761,7 +762,7 @@ while ($row = mysqli_fetch_assoc($status_distribution_result)) {
                     <i class="fas fa-user"></i>
                     <span>My Profile</span>
                 </a>
-                <a href="logout.php" class="menu-item">
+                <a href="../logout.php" class="menu-item">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </a>
