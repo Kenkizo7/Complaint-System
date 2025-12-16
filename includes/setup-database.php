@@ -3,7 +3,173 @@
  * Database setup and initialization script
  * This file creates the database and tables if they don't exist
  */
-
+function createDatabaseTables($conn) {
+    // Create system_settings table
+    $sql = "CREATE TABLE IF NOT EXISTS system_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        site_name VARCHAR(100) NOT NULL DEFAULT 'College Complaint System',
+        site_email VARCHAR(100) NOT NULL DEFAULT 'support@college.edu',
+        contact_phone VARCHAR(20),
+        address TEXT,
+        timezone VARCHAR(50) DEFAULT 'Asia/Kolkata',
+        logo_url VARCHAR(255),
+        favicon_url VARCHAR(255),
+        meta_description TEXT,
+        meta_keywords TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        return "Error creating system_settings table: " . mysqli_error($conn);
+    }
+    
+    // Insert default system settings
+    $sql = "INSERT IGNORE INTO system_settings (id, site_name, site_email, timezone) 
+            VALUES (1, 'College Complaint System', 'support@college.edu', 'Asia/Kolkata')";
+    mysqli_query($conn, $sql);
+    
+    // Create complaint_settings table
+    $sql = "CREATE TABLE IF NOT EXISTS complaint_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        auto_assign TINYINT(1) DEFAULT 1,
+        escalation_days INT DEFAULT 3,
+        reminder_frequency ENUM('daily', 'weekly', 'never') DEFAULT 'daily',
+        max_file_size INT DEFAULT 5242880,
+        allowed_file_types VARCHAR(255) DEFAULT 'jpg,jpeg,png,pdf,doc,docx',
+        require_evidence TINYINT(1) DEFAULT 0,
+        auto_close_days INT DEFAULT 30,
+        notify_complainant TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        return "Error creating complaint_settings table: " . mysqli_error($conn);
+    }
+    
+    // Insert default complaint settings
+    $sql = "INSERT IGNORE INTO complaint_settings (id) VALUES (1)";
+    mysqli_query($conn, $sql);
+    
+    // Create email_settings table
+    $sql = "CREATE TABLE IF NOT EXISTS email_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        smtp_host VARCHAR(100) DEFAULT 'smtp.gmail.com',
+        smtp_port INT DEFAULT 587,
+        smtp_username VARCHAR(100),
+        smtp_password TEXT,
+        smtp_encryption ENUM('', 'ssl', 'tls') DEFAULT 'tls',
+        from_email VARCHAR(100),
+        from_name VARCHAR(100),
+        email_tested TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        return "Error creating email_settings table: " . mysqli_error($conn);
+    }
+    
+    // Insert default email settings
+    $sql = "INSERT IGNORE INTO email_settings (id) VALUES (1)";
+    mysqli_query($conn, $sql);
+    
+    // Create notification_settings table
+    $sql = "CREATE TABLE IF NOT EXISTS notification_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        email_notifications TINYINT(1) DEFAULT 1,
+        new_complaint_notify TINYINT(1) DEFAULT 1,
+        status_change_notify TINYINT(1) DEFAULT 1,
+        student_reg_notify TINYINT(1) DEFAULT 1,
+        daily_summary TINYINT(1) DEFAULT 1,
+        weekly_report TINYINT(1) DEFAULT 0,
+        monthly_report TINYINT(1) DEFAULT 1,
+        notify_assigned_admin TINYINT(1) DEFAULT 1,
+        notify_complainant TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        return "Error creating notification_settings table: " . mysqli_error($conn);
+    }
+    
+    // Insert default notification settings
+    $sql = "INSERT IGNORE INTO notification_settings (id) VALUES (1)";
+    mysqli_query($conn, $sql);
+    
+    // Create security_settings table
+    $sql = "CREATE TABLE IF NOT EXISTS security_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        max_login_attempts INT DEFAULT 5,
+        lockout_time INT DEFAULT 30,
+        session_timeout INT DEFAULT 60,
+        password_expiry INT DEFAULT 90,
+        two_factor_auth TINYINT(1) DEFAULT 0,
+        ip_whitelist TEXT,
+        force_ssl TINYINT(1) DEFAULT 0,
+        require_strong_password TINYINT(1) DEFAULT 1,
+        password_history_count INT DEFAULT 5,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        return "Error creating security_settings table: " . mysqli_error($conn);
+    }
+    
+    // Insert default security settings
+    $sql = "INSERT IGNORE INTO security_settings (id) VALUES (1)";
+    mysqli_query($conn, $sql);
+    
+    // Create activity_logs table (if not exists from previous setup)
+    $sql = "CREATE TABLE IF NOT EXISTS activity_logs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT,
+        action_type VARCHAR(50) NOT NULL,
+        description TEXT NOT NULL,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_action_type (action_type),
+        INDEX idx_created_at (created_at),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        return "Error creating activity_logs table: " . mysqli_error($conn);
+    }
+    
+    // Add permissions column to users table if not exists
+    $sql = "SHOW COLUMNS FROM users LIKE 'permissions'";
+    $result = mysqli_query($conn, $sql);
+    if (mysqli_num_rows($result) == 0) {
+        $sql = "ALTER TABLE users ADD COLUMN permissions TEXT AFTER status";
+        mysqli_query($conn, $sql);
+    }
+    
+    // Add additional columns to users table for admin profiles
+    $columns_to_add = [
+        'last_login' => 'TIMESTAMP NULL DEFAULT NULL',
+        'password_changed_at' => 'TIMESTAMP NULL DEFAULT NULL',
+        'failed_login_attempts' => 'INT DEFAULT 0',
+        'last_failed_login' => 'TIMESTAMP NULL DEFAULT NULL',
+        'deleted_at' => 'TIMESTAMP NULL DEFAULT NULL'
+    ];
+    
+    foreach ($columns_to_add as $column => $definition) {
+        $sql = "SHOW COLUMNS FROM users LIKE '$column'";
+        $result = mysqli_query($conn, $sql);
+        if (mysqli_num_rows($result) == 0) {
+            $sql = "ALTER TABLE users ADD COLUMN $column $definition";
+            mysqli_query($conn, $sql);
+        }
+    }
+    
+    return true;
+}
 function setupDatabase($conn) {
     // Create database if it doesn't exist
     $createDBQuery = "CREATE DATABASE IF NOT EXISTS college_complaint_system 

@@ -270,6 +270,7 @@ while ($row = mysqli_fetch_assoc($reports_result)) {
                                 <th>Complaints Filed</th>
                                 <th>Resolved</th>
                                 <th>Pending</th>
+                                <th>Under Investigation</th>
                             </tr>
                         </thead>
                         <tbody>

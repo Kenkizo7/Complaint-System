@@ -27,6 +27,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                     <span>Dashboard</span>
                 </a>
             </li>
+            <div class="menu-section">Management</div>
             <li>
                 <a href="manage-complaints.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage-complaints.php' ? 'active' : ''; ?>">
                     <i class="fas fa-exclamation-circle"></i>
@@ -40,11 +41,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 </a>
             </li>
             <li>
-                <a href="categories.php">
-                    <i class="fas fa-tags"></i>
-                    <span>Categories</span>
+                <a href="student-registration.php" class="menu-item">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Student Registration</span>
                 </a>
             </li>
+            <div class="menu-section">Reports</div>
             <li>
                 <a href="reports.php">
                     <i class="fas fa-chart-bar"></i>
@@ -59,7 +61,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             </li>
             <li class="nav-divider"></li>
             <li>
-                <a href="../includes/logout.php">
+                <a href="../logout.php" class="menu-item">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </a>

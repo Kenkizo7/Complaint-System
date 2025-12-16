@@ -6,20 +6,130 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Don't try to include config.php here - let the calling file handle it
-// We'll assume that config.php has already been included by the calling script
+// Function to log user activity
+// Function to log user activity (UPDATED to match your database structure)
+function logActivity($conn, $description, $action_type = null, $details = null) {
+    // Get user ID from session
+    $user_id = $_SESSION['user_id'] ?? null;
+    
+    // If no user ID, try to get it from session data
+    if (!$user_id) {
+        return false;
+    }
+    
+    // Get user's IP address
+    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    
+    // Get user agent
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    
+    // Default action_type if not provided
+    if ($action_type === null) {
+        $action_type = 'general';
+    }
+    
+    // Note: Your table doesn't have 'details' or 'page_url' columns, so we'll omit them
+    // The description should contain all necessary information
+    
+    // Insert into activity_logs table - match your column names
+    $sql = "INSERT INTO activity_logs (user_id, action_type, description, ip_address, user_agent, created_at) 
+            VALUES (?, ?, ?, ?, ?, NOW())";
+    
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        error_log("Failed to prepare statement for logActivity: " . mysqli_error($conn));
+        return false;
+    }
+    
+    mysqli_stmt_bind_param($stmt, 'issss', $user_id, $action_type, $description, $ip_address, $user_agent);
+    
+    $result = mysqli_stmt_execute($stmt);
+    if (!$result) {
+        error_log("Failed to execute logActivity: " . mysqli_error($conn));
+        return false;
+    }
+    
+    mysqli_stmt_close($stmt);
+    return true;
+}
 
+// Function to get activity icon based on action_type (UPDATED parameter name)
+function getActivityIcon($action_type) {
+    $icons = [
+        'login' => 'sign-in-alt',
+        'logout' => 'sign-out-alt',
+        'create' => 'plus-circle',
+        'update' => 'edit',
+        'delete' => 'trash',
+        'view' => 'eye',
+        'download' => 'download',
+        'upload' => 'upload',
+        'status_change' => 'sync',
+        'password_change' => 'key',
+        'profile_update' => 'user-edit',
+        'system' => 'cog',
+        'report' => 'chart-bar',
+        'backup' => 'database',
+        'restore' => 'history',
+        'export' => 'file-export',
+        'import' => 'file-import',
+        'add_user' => 'user-plus',
+        'remove_user' => 'user-minus',
+        'general' => 'info-circle'
+    ];
+    
+    return $icons[$action_type] ?? 'info-circle';
+}
+
+// Function to format time elapsed
+// Function to format time elapsed
+// Function to format time elapsed (clean version)
+// Function to format time elapsed (safe version)
+function time_elapsed_string($datetime, $full = false) {
+    $now = new DateTime();
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
+    
+    // Create an array with time values
+    $timeValues = [
+        'y' => $diff->y,
+        'm' => $diff->m,
+        'd' => $diff->d,
+        'h' => $diff->h,
+        'i' => $diff->i,
+        's' => $diff->s
+    ];
+    
+    // Calculate weeks
+    $timeValues['w'] = floor($timeValues['d'] / 7);
+    $timeValues['d'] = $timeValues['d'] % 7;
+    
+    $string = [
+        'y' => 'year',
+        'm' => 'month',
+        'w' => 'week',
+        'd' => 'day',
+        'h' => 'hour',
+        'i' => 'minute',
+        's' => 'second',
+    ];
+    
+    $result = [];
+    foreach ($string as $key => $value) {
+        if ($timeValues[$key] > 0) {
+            $result[] = $timeValues[$key] . ' ' . $value . ($timeValues[$key] > 1 ? 's' : '');
+        }
+    }
+    
+    if (!$full && !empty($result)) {
+        $result = [array_shift($result)];
+    }
+    
+    return $result ? implode(', ', $result) . ' ago' : 'just now';
+}
 // Function to check if user is logged in
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
-}
-
-// Function to require login
-function requireLogin() {
-    if (!isLoggedIn()) {
-        header('Location: login.php');
-        exit();
-    }
 }
 
 // Function to get user data
@@ -236,6 +346,6 @@ function updateComplaintStatus($conn, $complaint_id, $status, $admin_notes = nul
     mysqli_stmt_bind_param($stmt, 'ssi', $status, $admin_notes, $complaint_id);
     return mysqli_stmt_execute($stmt);
 }
-// Function to check if user is admin
 
+// Function to check if user is admin
 ?>

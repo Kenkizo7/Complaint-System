@@ -3,6 +3,26 @@ require_once 'config.php';
 
 
 // auth.php
+function requireLogin() {
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: ../login.php');
+        exit();
+    }
+    
+    // Check if role is set in session, if not fetch from database
+    if (!isset($_SESSION['role'])) {
+        global $conn;
+        $user_id = $_SESSION['user_id'];
+        $sql = "SELECT role FROM users WHERE id = $user_id";
+        $result = mysqli_query($conn, $sql);
+        
+        if ($row = mysqli_fetch_assoc($result)) {
+            $_SESSION['role'] = $row['role'] ?? 'student';
+        } else {
+            $_SESSION['role'] = 'student';
+        }
+    }
+}
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
@@ -31,23 +51,6 @@ function generateResetToken($conn, $email) {
     mysqli_stmt_execute($stmt);
     
     return $token;
-}
-
-// Add the missing logActivity function
-function logActivity($conn, $user_id, $activity) {
-    // Ensure logs directory exists
-    if (!file_exists('logs')) {
-        mkdir('logs', 0777, true);
-    }
-    
-    $log_file = 'logs/activity.log';
-    $log_entry = date('Y-m-d H:i:s') . " | User ID: $user_id | Activity: $activity\n";
-    
-    // Use FILE_APPEND to add to the log file
-    if (file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX) === false) {
-        // If logging fails, you might want to log to PHP error log
-        error_log("Failed to write to activity log: $log_entry");
-    }
 }
 
 // Add sanitizeInput function

@@ -131,10 +131,6 @@ while ($row = mysqli_fetch_assoc($status_distribution_result)) {
                     <i class="fas fa-chart-bar"></i>
                     <span>Reports & Analytics</span>
                 </a>
-                <a href="generate-reports.php" class="menu-item">
-                    <i class="fas fa-file-export"></i>
-                    <span>Generate Reports</span>
-                </a>
                 
                 <div class="menu-section">System</div>
                 <a href="admin-profiles.php" class="menu-item">
@@ -151,7 +147,7 @@ while ($row = mysqli_fetch_assoc($status_distribution_result)) {
                 </a>
                 
                 <div class="menu-section">Account</div>
-                <a href="profile.php" class="menu-item">
+                <a href="admin-profile.php" class="menu-item">
                     <i class="fas fa-user"></i>
                     <span>My Profile</span>
                 </a>
